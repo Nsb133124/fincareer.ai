@@ -1,27 +1,23 @@
 export default async function handler(req, res) {
-  // ✅ CORS (important for browser requests)
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
   res.setHeader("Access-Control-Allow-Headers", "Content-Type");
 
-  // ✅ Handle preflight
   if (req.method === "OPTIONS") {
     return res.status(200).end();
   }
 
-  // ✅ Only allow POST
   if (req.method !== "POST") {
-    return res.status(200).json({ message: "API is working. Use POST." });
+    return res.status(200).json({ message: "Use POST" });
   }
 
   try {
     const { input } = req.body;
 
-    if (!input || input.trim() === "") {
-      return res.status(400).json({ error: "Input is required" });
+    if (!input) {
+      return res.status(400).json({ error: "Input missing" });
     }
 
-    // 🔥 Call OpenAI
     const response = await fetch("https://api.openai.com/v1/responses", {
       method: "POST",
       headers: {
@@ -29,17 +25,23 @@ export default async function handler(req, res) {
         "Content-Type": "application/json"
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
+        model: "gpt-4.1-mini", // ✅ CHANGE MODEL (IMPORTANT)
         input: `Optimize this LinkedIn profile:\n\n${input}`
       })
     });
 
     const data = await response.json();
 
-    // 🔍 Debug log (visible in Vercel logs)
-    console.log("OPENAI RESPONSE:", JSON.stringify(data, null, 2));
+    console.log("FULL OPENAI RESPONSE:", data);
 
-    // ✅ Handle all possible response formats
+    // ✅ HANDLE OPENAI ERRORS FIRST
+    if (data.error) {
+      return res.status(500).json({
+        error: data.error.message
+      });
+    }
+
+    // ✅ SAFE OUTPUT EXTRACTION
     let result = "";
 
     if (data.output_text) {
@@ -48,18 +50,17 @@ export default async function handler(req, res) {
       result = data.output[0].content[0].text;
     } else {
       return res.status(500).json({
-        error: "Unexpected AI response format",
+        error: "No valid AI output",
         raw: data
       });
     }
 
     return res.status(200).json({ result });
 
-  } catch (error) {
-    console.error("SERVER ERROR:", error);
-
+  } catch (err) {
+    console.error("SERVER ERROR:", err);
     return res.status(500).json({
-      error: "Server error while processing AI request"
+      error: "Server crashed"
     });
   }
 }
