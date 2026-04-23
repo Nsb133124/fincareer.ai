@@ -1,7 +1,6 @@
 import { useState } from "react";
 
 export default function App() {
-  // ✅ DEBUG (check in browser console)
   console.log("Razorpay Key:", import.meta.env.VITE_RAZORPAY_KEY);
 
   const [input, setInput] = useState("");
@@ -33,12 +32,21 @@ export default function App() {
         body: JSON.stringify({ input })
       });
 
-      const data = await res.json();
+      const text = await res.text();
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error("Invalid AI JSON:", text);
+        setOutput("Server error: " + text);
+        return;
+      }
 
       if (!res.ok) {
-        setOutput("Error: " + (data.error || "Something went wrong"));
+        setOutput("Error: " + data.error);
       } else {
-        setOutput(data.result || "No response received");
+        setOutput(data.result);
       }
 
     } catch (err) {
@@ -49,17 +57,31 @@ export default function App() {
     }
   }
 
-  // 🚀 PAYMENT FUNCTION
+  // 🚀 PAYMENT FUNCTION (FIXED)
   async function handlePayment() {
     try {
       const res = await fetch("/api/create-order", {
         method: "POST"
       });
 
-      const data = await res.json();
+      const text = await res.text();
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        console.error("Invalid JSON:", text);
+        alert("Server error: " + text);
+        return;
+      }
+
+      if (!res.ok) {
+        alert("Error: " + data.error);
+        return;
+      }
 
       const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY, // 🔥 KEY USED HERE
+        key: import.meta.env.VITE_RAZORPAY_KEY,
         amount: data.amount,
         currency: "INR",
         name: "FinCareer AI",
@@ -93,7 +115,6 @@ export default function App() {
   return (
     <div style={{ fontFamily: "Arial", padding: "20px", maxWidth: "700px", margin: "auto" }}>
       
-      {/* HERO */}
       <h1>🚀 FinCareer AI</h1>
       <p>Land Finance Jobs Faster using AI</p>
 
@@ -124,7 +145,6 @@ export default function App() {
 
       <hr />
 
-      {/* TOOL */}
       <h2>LinkedIn Optimizer</h2>
 
       <textarea
