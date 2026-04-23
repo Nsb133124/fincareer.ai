@@ -1,20 +1,16 @@
-import Razorpay from "razorpay";
-
 export default async function handler(req, res) {
-  // ✅ Allow only POST
   if (req.method !== "POST") {
     return res.status(200).json({ message: "Use POST" });
   }
 
   try {
-    // 🔍 Debug env (check in Vercel logs)
-    console.log("KEY ID:", process.env.RAZORPAY_KEY_ID ? "OK" : "MISSING");
-    console.log("KEY SECRET:", process.env.RAZORPAY_KEY_SECRET ? "OK" : "MISSING");
+    // ✅ Dynamic import (fixes Vercel issues)
+    const Razorpay = (await import("razorpay")).default;
 
-    // 🚨 Validate env variables
+    // ✅ Check env variables
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
       return res.status(500).json({
-        error: "Razorpay keys missing in environment variables"
+        error: "Missing Razorpay environment variables"
       });
     }
 
@@ -24,7 +20,7 @@ export default async function handler(req, res) {
     });
 
     const order = await razorpay.orders.create({
-      amount: 9900, // ₹99
+      amount: 9900,
       currency: "INR",
       receipt: "receipt_1"
     });
@@ -35,7 +31,7 @@ export default async function handler(req, res) {
     console.error("CREATE ORDER ERROR:", error);
 
     return res.status(500).json({
-      error: error.message || "Order creation failed"
+      error: error.message || "Server crashed"
     });
   }
 }
