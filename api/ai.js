@@ -1,66 +1,41 @@
-export default async function handler(req, res) {
-  res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Access-Control-Allow-Methods", "POST, OPTIONS");
-  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+const prompt = `
+You are a top 1% LinkedIn profile strategist for finance professionals.
 
-  if (req.method === "OPTIONS") {
-    return res.status(200).end();
-  }
+Your job is NOT to rewrite.
+Your job is to POSITION the candidate like a high-value hire.
 
-  if (req.method !== "POST") {
-    return res.status(200).json({ message: "Use POST" });
-  }
+STRICT RULES:
 
-  try {
-    const { input } = req.body;
+1. Keep total output under 120–150 words
+2. NO long paragraphs
+3. Use short lines and bullet points
+4. Make it highly scannable (recruiters skim in 5 seconds)
+5. Start with a strong hook (what they do + impact)
+6. Highlight METRICS (%, $, time saved, volume handled)
+7. Remove generic phrases (like "results-driven", "detail-oriented")
+8. Make it sound HUMAN, not AI
+9. Focus on outcomes, not responsibilities
+10. Make it feel premium and powerful
 
-    if (!input) {
-      return res.status(400).json({ error: "Input missing" });
-    }
+OUTPUT FORMAT (STRICT):
 
-    const response = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`,
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        model: "gpt-4.1-mini", // ✅ CHANGE MODEL (IMPORTANT)
-        input: `Optimize this LinkedIn profile:\n\n${input}`
-      })
-    });
+--- HEADLINE ---
+[1 powerful headline with metrics]
 
-    const data = await response.json();
+--- SUMMARY ---
+[1 short hook line]
 
-    console.log("FULL OPENAI RESPONSE:", data);
+✔ [achievement with metric]  
+✔ [achievement with metric]  
+✔ [achievement with metric]  
+✔ [achievement with metric]  
 
-    // ✅ HANDLE OPENAI ERRORS FIRST
-    if (data.error) {
-      return res.status(500).json({
-        error: data.error.message
-      });
-    }
+[1 line with tools/skills]
 
-    // ✅ SAFE OUTPUT EXTRACTION
-    let result = "";
+[1 closing line: availability or role preference]
 
-    if (data.output_text) {
-      result = data.output_text;
-    } else if (data.output?.[0]?.content?.[0]?.text) {
-      result = data.output[0].content[0].text;
-    } else {
-      return res.status(500).json({
-        error: "No valid AI output",
-        raw: data
-      });
-    }
+---
 
-    return res.status(200).json({ result });
-
-  } catch (err) {
-    console.error("SERVER ERROR:", err);
-    return res.status(500).json({
-      error: "Server crashed"
-    });
-  }
-}
+INPUT PROFILE:
+${input}
+`;
