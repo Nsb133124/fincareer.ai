@@ -1,17 +1,21 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 export default function App() {
-  console.log("Razorpay Key:", import.meta.env.VITE_RAZORPAY_KEY);
-
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
 
-  // 🚀 AI FUNCTION
+  // ✅ Persist payment
+  useEffect(() => {
+    const paid = localStorage.getItem("paid");
+    if (paid === "true") setIsPaid(true);
+  }, []);
+
+  // 🚀 AI CALL
   async function runAI() {
     if (!isPaid) {
-      alert("Please upgrade to use AI");
+      alert("Please unlock access first");
       return;
     }
 
@@ -32,16 +36,7 @@ export default function App() {
         body: JSON.stringify({ input })
       });
 
-      const text = await res.text();
-
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        console.error("Invalid AI JSON:", text);
-        setOutput("Server error: " + text);
-        return;
-      }
+      const data = await res.json();
 
       if (!res.ok) {
         setOutput("Error: " + data.error);
@@ -50,143 +45,114 @@ export default function App() {
       }
 
     } catch (err) {
-      console.error(err);
       setOutput("Error connecting to AI");
     } finally {
       setLoading(false);
     }
   }
 
-  // 🚀 PAYMENT FUNCTION (FIXED)
+  // 💰 PAYMENT
   async function handlePayment() {
     try {
       const res = await fetch("/api/create-order", {
         method: "POST"
       });
 
-      const text = await res.text();
-
-      let data;
-      try {
-        data = JSON.parse(text);
-      } catch (e) {
-        console.error("Invalid JSON:", text);
-        alert("Server error: " + text);
-        return;
-      }
-
-      if (!res.ok) {
-        alert("Error: " + data.error);
-        return;
-      }
+      const data = await res.json();
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY,
         amount: data.amount,
         currency: "INR",
         name: "FinCareer AI",
-        description: "Unlock Pro Access",
+        description: "Unlock Full Access",
         order_id: data.id,
-
         handler: function () {
           alert("Payment successful!");
+          localStorage.setItem("paid", "true");
           setIsPaid(true);
-        },
-
-        prefill: {
-          name: "User",
-          email: "test@example.com"
-        },
-
-        theme: {
-          color: "#007bff"
         }
       };
 
       const rzp = new window.Razorpay(options);
       rzp.open();
 
-    } catch (error) {
-      console.error("Payment error:", error);
+    } catch (err) {
       alert("Payment failed");
     }
   }
 
   return (
-    <div style={{ fontFamily: "Arial", padding: "20px", maxWidth: "700px", margin: "auto" }}>
+    <div style={{ fontFamily: "Arial", background: "#0E0C08", color: "#F5F0E8" }}>
       
-      <h1>🚀 FinCareer AI</h1>
-      <p>Land Finance Jobs Faster using AI</p>
+      {/* HERO */}
+      <section style={{ padding: "80px 20px", textAlign: "center" }}>
+        <h1 style={{ fontSize: "42px" }}>
+          Land your <span style={{ color: "#C9A84C" }}>interview</span> in 5 steps
+        </h1>
 
-      <h3>🔥 What you get:</h3>
-      <ul>
-        <li>LinkedIn Optimizer</li>
-        <li>Resume Optimizer (coming)</li>
-        <li>Cold Email Generator</li>
-      </ul>
+        <p style={{ color: "#aaa", marginTop: "10px" }}>
+          AI-powered system for Finance professionals (GCC / UAE / SSC roles)
+        </p>
 
-      <h2>💰 Price: ₹99</h2>
+        {!isPaid && (
+          <button
+            onClick={handlePayment}
+            style={{
+              marginTop: "20px",
+              padding: "12px 24px",
+              background: "#C9A84C",
+              border: "none",
+              cursor: "pointer"
+            }}
+          >
+            🔓 Unlock Full Access – ₹99
+          </button>
+        )}
 
-      {!isPaid && (
+        {isPaid && (
+          <p style={{ color: "#4CAF50", marginTop: "20px" }}>
+            ✅ Access Unlocked
+          </p>
+        )}
+      </section>
+
+      {/* TOOL */}
+      <section style={{ padding: "40px 20px", maxWidth: "800px", margin: "auto" }}>
+        <h2>LinkedIn Optimizer</h2>
+
+        <textarea
+          placeholder="Paste your LinkedIn profile..."
+          value={input}
+          onChange={(e) => setInput(e.target.value)}
+          style={{
+            width: "100%",
+            height: "120px",
+            marginTop: "10px",
+            padding: "10px"
+          }}
+        />
+
+        <br /><br />
+
         <button
-          onClick={handlePayment}
+          onClick={runAI}
           style={{
             padding: "10px 20px",
-            backgroundColor: "green",
-            color: "white",
-            border: "none",
-            borderRadius: "6px",
+            background: "#1C1914",
+            color: "#fff",
+            border: "1px solid #444",
             cursor: "pointer"
           }}
         >
-          Upgrade to Pro
+          {loading ? "Running..." : "Run AI"}
         </button>
-      )}
 
-      <hr />
+        <div style={{ marginTop: "20px", whiteSpace: "pre-wrap" }}>
+          {output}
+        </div>
+      </section>
 
-      <h2>LinkedIn Optimizer</h2>
-
-      <textarea
-        placeholder="Paste LinkedIn profile"
-        value={input}
-        onChange={(e) => setInput(e.target.value)}
-        style={{
-          width: "100%",
-          height: "120px",
-          padding: "10px",
-          borderRadius: "6px",
-          border: "1px solid #ccc"
-        }}
-      />
-
-      <br /><br />
-
-      <button
-        onClick={runAI}
-        style={{
-          padding: "10px 20px",
-          backgroundColor: "#007bff",
-          color: "white",
-          border: "none",
-          borderRadius: "6px",
-          cursor: "pointer"
-        }}
-      >
-        {loading ? "Running..." : "Run AI"}
-      </button>
-
-      <div
-        style={{
-          marginTop: "20px",
-          whiteSpace: "pre-wrap",
-          background: "#f5f5f5",
-          padding: "15px",
-          borderRadius: "6px"
-        }}
-      >
-        {output}
-      </div>
     </div>
   );
 }
