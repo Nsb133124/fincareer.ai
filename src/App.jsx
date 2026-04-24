@@ -6,23 +6,15 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
 
-  // ✅ Load payment state (temporary persistence)
   useEffect(() => {
-    const paid = localStorage.getItem("paid");
-    if (paid === "true") setIsPaid(true);
+    if (localStorage.getItem("paid") === "true") {
+      setIsPaid(true);
+    }
   }, []);
 
-  // 🚀 AI FUNCTION
   async function runAI() {
-    if (!isPaid) {
-      alert("Please unlock access first");
-      return;
-    }
-
-    if (!input.trim()) {
-      alert("Paste your profile first");
-      return;
-    }
+    if (!isPaid) return alert("Unlock access first");
+    if (!input.trim()) return alert("Paste profile");
 
     setLoading(true);
     setOutput("Processing...");
@@ -30,162 +22,246 @@ export default function App() {
     try {
       const res = await fetch("/api/ai", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ input })
       });
 
       const data = await res.json();
-
-      if (!res.ok) {
-        setOutput("Error: " + data.error);
-      } else {
-        setOutput(data.result);
-      }
-
-    } catch (err) {
-      setOutput("Error connecting to AI");
+      setOutput(res.ok ? data.result : "Error: " + data.error);
+    } catch {
+      setOutput("Connection error");
     } finally {
       setLoading(false);
     }
   }
 
-  // 💰 PAYMENT FUNCTION
   async function handlePayment() {
-    try {
-      const res = await fetch("/api/create-order", {
-        method: "POST"
-      });
+    const res = await fetch("/api/create-order", { method: "POST" });
+    const data = await res.json();
 
-      const data = await res.json();
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY,
+      amount: data.amount,
+      currency: "INR",
+      order_id: data.id,
+      handler: async function (response) {
+        const verify = await fetch("/api/verify-payment", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(response)
+        });
 
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY,
-        amount: data.amount,
-        currency: "INR",
-        name: "FinCareer AI",
-        description: "Unlock Full Access",
-        order_id: data.id,
+        const result = await verify.json();
 
-        handler: async function (response) {
-          try {
-            const verifyRes = await fetch("/api/verify-payment", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json"
-              },
-              body: JSON.stringify(response)
-            });
-
-            const verifyData = await verifyRes.json();
-
-            if (verifyData.success) {
-              alert("Payment verified!");
-              localStorage.setItem("paid", "true");
-              setIsPaid(true);
-            } else {
-              alert("Payment verification failed");
-            }
-
-          } catch (err) {
-            alert("Verification error");
-          }
-        },
-
-        theme: {
-          color: "#C9A84C"
+        if (result.success) {
+          localStorage.setItem("paid", "true");
+          setIsPaid(true);
+          alert("Access unlocked!");
         }
-      };
+      }
+    };
 
-      const rzp = new window.Razorpay(options);
-      rzp.open();
-
-    } catch (err) {
-      console.error(err);
-      alert("Payment failed");
-    }
+    new window.Razorpay(options).open();
   }
 
   return (
-    <div style={{ fontFamily: "Arial", background: "#0E0C08", color: "#F5F0E8", minHeight: "100vh" }}>
-      
+    <div style={{
+      fontFamily: "Inter, sans-serif",
+      background: "#0B0B0D",
+      color: "#EAEAEA"
+    }}>
+
       {/* HERO */}
-      <section style={{ padding: "80px 20px", textAlign: "center" }}>
-        <h1 style={{ fontSize: "42px" }}>
-          Land your <span style={{ color: "#C9A84C" }}>interview</span> in 5 steps
+      <section style={{
+        textAlign: "center",
+        padding: "120px 20px"
+      }}>
+        <h1 style={{ fontSize: "60px" }}>
+          Land your <span style={{ color: "#C9A84C" }}>interview</span><br />
+          in 5 steps.
         </h1>
 
-        <p style={{ color: "#aaa", marginTop: "10px" }}>
-          AI-powered system for Finance professionals (GCC / UAE / SSC roles)
+        <p style={{ color: "#aaa", marginTop: "20px" }}>
+          A complete system — not just a tool
         </p>
 
-        {!isPaid ? (
-          <button
-            onClick={handlePayment}
-            style={{
-              marginTop: "20px",
-              padding: "12px 24px",
-              background: "#C9A84C",
-              border: "none",
-              cursor: "pointer",
-              fontSize: "16px"
-            }}
-          >
-            🔓 Unlock Full Access – ₹99
+        {!isPaid && (
+          <button onClick={handlePayment} style={{
+            marginTop: "25px",
+            padding: "14px 32px",
+            background: "#C9A84C",
+            borderRadius: "8px",
+            border: "none",
+            fontWeight: "600"
+          }}>
+            Unlock Full System – ₹99
           </button>
-        ) : (
-          <p style={{ color: "#4CAF50", marginTop: "20px" }}>
-            ✅ Access Unlocked
-          </p>
         )}
       </section>
 
+      {/* 🔥 5 STEP SYSTEM (MAIN SELLING SECTION) */}
+      <section style={{
+        maxWidth: "1100px",
+        margin: "auto",
+        padding: "80px 20px"
+      }}>
+        <h2 style={{
+          textAlign: "center",
+          fontSize: "36px",
+          marginBottom: "60px"
+        }}>
+          What you get inside
+        </h2>
+
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+          gap: "24px"
+        }}>
+          {[
+            {
+              icon: "🔍",
+              title: "LinkedIn Optimizer",
+              desc: "Turn your profile into a recruiter magnet"
+            },
+            {
+              icon: "📄",
+              title: "Resume Fix",
+              desc: "ATS-friendly, recruiter-approved resume"
+            },
+            {
+              icon: "🎯",
+              title: "Smart Targeting",
+              desc: "Apply only where you have real chances"
+            },
+            {
+              icon: "💬",
+              title: "Cold Outreach Scripts",
+              desc: "DM recruiters and actually get replies"
+            },
+            {
+              icon: "🔥",
+              title: "Interview Answers",
+              desc: "Answer like top 1% candidates"
+            }
+          ].map((step, i) => (
+            <div key={i} style={{
+              padding: "28px",
+              borderRadius: "16px",
+              background: "linear-gradient(145deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02))",
+              border: "1px solid rgba(255,255,255,0.08)",
+              transition: "0.3s"
+            }}
+            onMouseEnter={e => {
+              e.currentTarget.style.transform = "translateY(-8px)";
+              e.currentTarget.style.borderColor = "#C9A84C";
+            }}
+            onMouseLeave={e => {
+              e.currentTarget.style.transform = "translateY(0)";
+              e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
+            }}
+            >
+              <div style={{ fontSize: "28px" }}>{step.icon}</div>
+
+              <h3 style={{ marginTop: "15px" }}>
+                {step.title}
+              </h3>
+
+              <p style={{ color: "#aaa", marginTop: "10px" }}>
+                {step.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* BEFORE AFTER */}
+      <section style={{
+        maxWidth: "900px",
+        margin: "auto",
+        padding: "60px 20px"
+      }}>
+        <h2 style={{ textAlign: "center" }}>Before vs After</h2>
+
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: "20px",
+          marginTop: "30px"
+        }}>
+          <div style={{ background: "#111", padding: "20px", borderRadius: "10px" }}>
+            ❌ Generic profile
+          </div>
+
+          <div style={{ background: "#111", padding: "20px", borderRadius: "10px" }}>
+            ✅ Recruiter-ready profile
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIALS */}
+      <section style={{
+        padding: "60px 20px",
+        maxWidth: "900px",
+        margin: "auto"
+      }}>
+        <h2 style={{ textAlign: "center" }}>What users say</h2>
+
+        <div style={{
+          marginTop: "30px",
+          display: "grid",
+          gap: "20px"
+        }}>
+          <div style={{ background: "#111", padding: "20px", borderRadius: "10px" }}>
+            ⭐⭐⭐⭐⭐ Got interview calls in 2 weeks!
+          </div>
+
+          <div style={{ background: "#111", padding: "20px", borderRadius: "10px" }}>
+            ⭐⭐⭐⭐⭐ Best ₹99 I spent
+          </div>
+        </div>
+      </section>
+
       {/* TOOL */}
-      <section style={{ padding: "40px 20px", maxWidth: "800px", margin: "auto" }}>
-        <h2>LinkedIn Optimizer</h2>
+      <section style={{
+        maxWidth: "800px",
+        margin: "auto",
+        padding: "60px 20px"
+      }}>
+        <h2>Try it now</h2>
 
         <textarea
-          placeholder="Paste your LinkedIn profile..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
+          placeholder="Paste LinkedIn profile..."
           style={{
             width: "100%",
-            height: "120px",
-            marginTop: "10px",
-            padding: "10px",
-            borderRadius: "6px",
-            border: "1px solid #444",
-            background: "#1C1914",
+            height: "140px",
+            padding: "12px",
+            background: "#111",
+            border: "1px solid #222",
+            borderRadius: "8px",
             color: "#fff"
           }}
         />
 
         <br /><br />
 
-        <button
-          onClick={runAI}
-          style={{
-            padding: "10px 20px",
-            background: "#1C1914",
-            color: "#fff",
-            border: "1px solid #444",
-            cursor: "pointer",
-            borderRadius: "6px"
-          }}
-        >
+        <button onClick={runAI} style={{
+          padding: "10px 20px",
+          background: "#C9A84C",
+          borderRadius: "6px",
+          border: "none"
+        }}>
           {loading ? "Running..." : "Run AI"}
         </button>
 
-        <div
-          style={{
-            marginTop: "20px",
-            whiteSpace: "pre-wrap",
-            background: "#1C1914",
-            padding: "15px",
-            borderRadius: "6px"
-          }}
-        >
+        <div style={{
+          marginTop: "20px",
+          background: "#111",
+          padding: "15px",
+          borderRadius: "8px"
+        }}>
           {output}
         </div>
       </section>
