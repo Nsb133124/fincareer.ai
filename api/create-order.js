@@ -4,10 +4,8 @@ export default async function handler(req, res) {
   }
 
   try {
-    // ✅ Dynamic import (fixes Vercel issues)
     const Razorpay = (await import("razorpay")).default;
 
-    // ✅ Check env variables
     if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
       return res.status(500).json({
         error: "Missing Razorpay environment variables"
@@ -20,9 +18,9 @@ export default async function handler(req, res) {
     });
 
     const order = await razorpay.orders.create({
-      amount: 9900,
+      amount: 9900, // ₹99
       currency: "INR",
-      receipt: "receipt_1"
+      receipt: "receipt_" + Date.now()
     });
 
     return res.status(200).json(order);

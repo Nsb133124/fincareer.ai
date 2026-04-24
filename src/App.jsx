@@ -6,13 +6,13 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [isPaid, setIsPaid] = useState(false);
 
-  // ✅ Persist payment
+  // ✅ Load payment state (temporary persistence)
   useEffect(() => {
     const paid = localStorage.getItem("paid");
     if (paid === "true") setIsPaid(true);
   }, []);
 
-  // 🚀 AI CALL
+  // 🚀 AI FUNCTION
   async function runAI() {
     if (!isPaid) {
       alert("Please unlock access first");
@@ -51,7 +51,7 @@ export default function App() {
     }
   }
 
-  // 💰 PAYMENT
+  // 💰 PAYMENT FUNCTION
   async function handlePayment() {
     try {
       const res = await fetch("/api/create-order", {
@@ -67,10 +67,34 @@ export default function App() {
         name: "FinCareer AI",
         description: "Unlock Full Access",
         order_id: data.id,
-        handler: function () {
-          alert("Payment successful!");
-          localStorage.setItem("paid", "true");
-          setIsPaid(true);
+
+        handler: async function (response) {
+          try {
+            const verifyRes = await fetch("/api/verify-payment", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify(response)
+            });
+
+            const verifyData = await verifyRes.json();
+
+            if (verifyData.success) {
+              alert("Payment verified!");
+              localStorage.setItem("paid", "true");
+              setIsPaid(true);
+            } else {
+              alert("Payment verification failed");
+            }
+
+          } catch (err) {
+            alert("Verification error");
+          }
+        },
+
+        theme: {
+          color: "#C9A84C"
         }
       };
 
@@ -78,12 +102,13 @@ export default function App() {
       rzp.open();
 
     } catch (err) {
+      console.error(err);
       alert("Payment failed");
     }
   }
 
   return (
-    <div style={{ fontFamily: "Arial", background: "#0E0C08", color: "#F5F0E8" }}>
+    <div style={{ fontFamily: "Arial", background: "#0E0C08", color: "#F5F0E8", minHeight: "100vh" }}>
       
       {/* HERO */}
       <section style={{ padding: "80px 20px", textAlign: "center" }}>
@@ -95,7 +120,7 @@ export default function App() {
           AI-powered system for Finance professionals (GCC / UAE / SSC roles)
         </p>
 
-        {!isPaid && (
+        {!isPaid ? (
           <button
             onClick={handlePayment}
             style={{
@@ -103,14 +128,13 @@ export default function App() {
               padding: "12px 24px",
               background: "#C9A84C",
               border: "none",
-              cursor: "pointer"
+              cursor: "pointer",
+              fontSize: "16px"
             }}
           >
             🔓 Unlock Full Access – ₹99
           </button>
-        )}
-
-        {isPaid && (
+        ) : (
           <p style={{ color: "#4CAF50", marginTop: "20px" }}>
             ✅ Access Unlocked
           </p>
@@ -129,7 +153,11 @@ export default function App() {
             width: "100%",
             height: "120px",
             marginTop: "10px",
-            padding: "10px"
+            padding: "10px",
+            borderRadius: "6px",
+            border: "1px solid #444",
+            background: "#1C1914",
+            color: "#fff"
           }}
         />
 
@@ -142,13 +170,22 @@ export default function App() {
             background: "#1C1914",
             color: "#fff",
             border: "1px solid #444",
-            cursor: "pointer"
+            cursor: "pointer",
+            borderRadius: "6px"
           }}
         >
           {loading ? "Running..." : "Run AI"}
         </button>
 
-        <div style={{ marginTop: "20px", whiteSpace: "pre-wrap" }}>
+        <div
+          style={{
+            marginTop: "20px",
+            whiteSpace: "pre-wrap",
+            background: "#1C1914",
+            padding: "15px",
+            borderRadius: "6px"
+          }}
+        >
           {output}
         </div>
       </section>
