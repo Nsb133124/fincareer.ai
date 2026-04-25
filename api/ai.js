@@ -1,93 +1,98 @@
 export default async function handler(req, res) {
   if (req.method !== "POST") {
-    return res.status(405).json({ message: "Use POST" });
+    return res.status(200).json({ message: "Use POST" });
   }
 
   try {
     const { input } = req.body;
 
     if (!input) {
-      return res.status(400).json({ error: "Missing input" });
+      return res.status(400).json({
+        error: "Missing input"
+      });
     }
 
-    if (!process.env.ANTHROPIC_API_KEY) {
-      return res.status(500).json({ error: "Missing Anthropic API key" });
+    if (!process.env.OPENAI_API_KEY) {
+      return res.status(500).json({
+        error: "Missing OpenAI API key"
+      });
     }
 
     const prompt = `
-You are an elite executive branding strategist for finance professionals.
+You are an elite LinkedIn branding strategist.
 
-Rewrite the profile into a LinkedIn summary that feels sharp, premium, credible, and instantly impressive.
+Rewrite the profile so it feels premium, sharp, and recruiter-attractive.
 
-RULES:
-- Maximum 90 words
+STRICT RULES:
+- NEVER invent facts
+- NEVER invent percentages
+- NEVER invent savings, counts, or metrics
+- ONLY use metrics explicitly mentioned in the input
+- If no metrics exist, strengthen wording WITHOUT numbers
 - No fluff
 - No clichés
-- No generic corporate buzzwords
-- No fake motivational closing lines
-- Make it sound like a real high performer
-- Keep geography/domain specificity (UAE, GCC, LATAM, North America, SSC, AP, etc.)
-- Highlight numbers aggressively
-- Make it concise and punchy
-- Output must feel powerful enough to copy-paste immediately
+- No generic buzzwords
+- Maximum 90 words
+- Make it concise and powerful
+- Make it sound human, not AI-written
 
 FORMAT:
 
 HEADLINE:
-[specific, metric-driven headline]
+[specific professional positioning]
 
 SUMMARY:
 [one sharp opening line]
 
-✔ [achievement]
-✔ [achievement]
-✔ [achievement]
-✔ [achievement]
+✔ [achievement from input]
+✔ [achievement from input]
+✔ [achievement from input]
+✔ [achievement from input]
 
-[skills/tools line]
+[skills line]
 
-[availability / market focus line]
+[market focus / availability]
 
 INPUT:
 ${input}
 `;
 
-    const response = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": process.env.ANTHROPIC_API_KEY,
-        "anthropic-version": "2023-06-01",
-      },
-      body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 1024,
-        messages: [
-          {
-            role: "user",
-            content: prompt,
-          },
-        ],
-      }),
-    });
+    const response = await fetch(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.4
+        })
+      }
+    );
 
     const data = await response.json();
 
     if (!response.ok) {
-      console.error("ANTHROPIC ERROR:", data);
       return res.status(500).json({
-        error: data.error?.message || "Anthropic API failed",
+        error: data.error?.message || "OpenAI failed"
       });
     }
 
-    const result = data?.content?.[0]?.text || "No response generated";
-
-    return res.status(200).json({ result });
+    return res.status(200).json({
+      result: data.choices?.[0]?.message?.content || "No response"
+    });
 
   } catch (error) {
-    console.error("AI ERROR:", error);
     return res.status(500).json({
-      error: error.message || "Server crashed",
+      error: error.message || "Server crashed"
     });
   }
 }
