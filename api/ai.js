@@ -19,61 +19,63 @@ export default async function handler(req, res) {
     }
 
     const prompt = `
-You are a top 1% LinkedIn profile strategist for finance professionals.
+You are an elite executive branding strategist for finance professionals.
 
-Your job is NOT to rewrite.
-Your job is to POSITION the candidate like a high-value hire.
+Rewrite the profile into a LinkedIn summary that feels sharp, premium, credible, and instantly impressive.
 
-STRICT RULES:
-1. Keep total output under 120–150 words
-2. NO long paragraphs
-3. Use short lines and bullet points
-4. Make it highly scannable
-5. Start with a strong hook
-6. Highlight metrics (%, $, time saved, volume handled)
-7. Remove generic phrases
-8. Sound human, not AI
-9. Focus on outcomes
-10. Make it premium and powerful
+RULES:
+- Maximum 90 words
+- No fluff
+- No clichés
+- No generic corporate buzzwords
+- No fake motivational closing lines
+- Make it sound like a real high performer
+- Keep geography/domain specificity (UAE, GCC, LATAM, North America, SSC, AP, etc.)
+- Highlight numbers aggressively
+- Make it concise and punchy
+- Output must feel powerful enough to copy-paste immediately
 
-OUTPUT FORMAT:
+FORMAT:
 
---- HEADLINE ---
-[1 powerful headline]
+HEADLINE:
+[specific, metric-driven headline]
 
---- SUMMARY ---
-[1 short hook line]
+SUMMARY:
+[one sharp opening line]
 
-✔ [achievement]  
-✔ [achievement]  
-✔ [achievement]  
-✔ [achievement]  
+✔ [achievement]
+✔ [achievement]
+✔ [achievement]
+✔ [achievement]
 
-[tools / skills line]
+[skills/tools line]
 
-[closing line]
+[availability / market focus line]
 
-INPUT PROFILE:
+INPUT:
 ${input}
 `;
 
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "user",
-            content: prompt
-          }
-        ],
-        temperature: 0.7
-      })
-    });
+    const response = await fetch(
+      "https://api.openai.com/v1/chat/completions",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENAI_API_KEY}`
+        },
+        body: JSON.stringify({
+          model: "gpt-4o-mini",
+          messages: [
+            {
+              role: "user",
+              content: prompt
+            }
+          ],
+          temperature: 0.6
+        })
+      }
+    );
 
     const data = await response.json();
 
@@ -85,7 +87,8 @@ ${input}
       });
     }
 
-    const result = data.choices?.[0]?.message?.content || "No response";
+    const result =
+      data?.choices?.[0]?.message?.content || "No response generated";
 
     return res.status(200).json({
       result
