@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function App() {
+  const [mode, setMode] = useState("linkedin");
   const [input, setInput] = useState("");
   const [output, setOutput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -19,12 +20,20 @@ export default function App() {
     }
 
     if (!input.trim()) {
-      alert("Paste your LinkedIn profile");
+      alert(
+        mode === "linkedin"
+          ? "Paste your LinkedIn profile"
+          : "Paste your Resume summary"
+      );
       return;
     }
 
     setLoading(true);
-    setOutput("Crafting elite positioning...");
+    setOutput(
+      mode === "linkedin"
+        ? "Crafting elite LinkedIn positioning..."
+        : "Crafting elite resume positioning..."
+    );
 
     try {
       const res = await fetch("/api/ai", {
@@ -32,11 +41,18 @@ export default function App() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ input })
+        body: JSON.stringify({
+          input: `[MODE: ${mode.toUpperCase()}]\n${input}`
+        })
       });
 
       const data = await res.json();
-      setOutput(res.ok ? data.result : `Error: ${data.error}`);
+
+      if (!res.ok) {
+        setOutput(`Error: ${data.error}`);
+      } else {
+        setOutput(data.result);
+      }
     } catch {
       setOutput("Connection error");
     } finally {
@@ -58,8 +74,7 @@ export default function App() {
         currency: "INR",
         order_id: data.id,
         name: "FinCareer Elite",
-        description: "Unlock Elite Career Positioning",
-
+        description: "Unlock Elite Access",
         handler: async function (response) {
           const verify = await fetch("/api/verify-payment", {
             method: "POST",
@@ -91,28 +106,28 @@ export default function App() {
   const cards = [
     {
       icon: "🔍",
-      title: "LinkedIn Positioning",
-      desc: "Convert your profile into recruiter magnet copy."
+      title: "Executive LinkedIn Optimization",
+      desc: "Turn your profile into recruiter magnet copy."
     },
     {
       icon: "📄",
-      title: "Resume Upgrade",
-      desc: "Professional positioning that gets shortlisted."
+      title: "Resume Positioning Upgrade",
+      desc: "Sharper positioning that gets shortlisted."
     },
     {
       icon: "🎯",
-      title: "Smart Targeting",
-      desc: "Apply only where your profile has edge."
+      title: "Career Narrative Clarity",
+      desc: "Clearly communicate your professional value."
     },
     {
       icon: "💬",
-      title: "Outreach Scripts",
-      desc: "Message recruiters with confidence."
+      title: "Recruiter Outreach Messaging",
+      desc: "Stronger professional communication."
     },
     {
       icon: "🚀",
-      title: "Interview Presence",
-      desc: "Show up like a high-value hire."
+      title: "Interview Positioning",
+      desc: "Show up like a high-value candidate."
     }
   ];
 
@@ -121,7 +136,7 @@ export default function App() {
       style={{
         minHeight: "100vh",
         background:
-          "radial-gradient(circle at top right, rgba(201,168,76,.18), transparent 30%), radial-gradient(circle at top left, rgba(201,168,76,.08), transparent 25%), #060606",
+          "radial-gradient(circle at top right, rgba(212,175,55,.16), transparent 30%), radial-gradient(circle at top left, rgba(212,175,55,.08), transparent 25%), #050505",
         color: "#fff",
         fontFamily: "Inter, sans-serif"
       }}
@@ -150,15 +165,15 @@ export default function App() {
         <div
           style={{
             padding: "10px 18px",
-            border: "1px solid rgba(255,255,255,.08)",
             borderRadius: "999px",
-            background: "rgba(255,255,255,.03)",
-            backdropFilter: "blur(12px)",
-            fontSize: "14px",
-            color: "#d7d7d7"
+            background: "rgba(255,255,255,.04)",
+            border: "1px solid rgba(255,255,255,.08)",
+            backdropFilter: "blur(14px)",
+            color: "#d5d5d5",
+            fontSize: "14px"
           }}
         >
-          Trusted by Finance Professionals
+          Built for Finance Professionals
         </div>
       </div>
 
@@ -174,16 +189,16 @@ export default function App() {
         <div
           style={{
             display: "inline-block",
-            padding: "8px 16px",
+            padding: "8px 18px",
             borderRadius: "999px",
-            background: "rgba(212,175,55,.12)",
+            background: "rgba(212,175,55,.10)",
             color: "#D4AF37",
-            border: "1px solid rgba(212,175,55,.25)",
-            marginBottom: "30px",
+            border: "1px solid rgba(212,175,55,.22)",
+            marginBottom: "26px",
             fontSize: "14px"
           }}
         >
-          Elite Career Positioning System
+          Elite Career Positioning Engine
         </div>
 
         <h1
@@ -195,22 +210,22 @@ export default function App() {
             letterSpacing: "-2px"
           }}
         >
-          Become the
+          Make recruiters
           <br />
-          <span style={{ color: "#D4AF37" }}>candidate recruiters chase</span>
+          <span style={{ color: "#D4AF37" }}>notice you instantly</span>
         </h1>
 
         <p
           style={{
-            maxWidth: "760px",
+            maxWidth: "780px",
             margin: "28px auto",
-            color: "#b8b8b8",
+            color: "#b6b6b6",
             fontSize: "20px",
             lineHeight: 1.7
           }}
         >
-          LinkedIn positioning, executive branding, smart outreach, and career
-          acceleration — built specifically for ambitious finance professionals.
+          Premium LinkedIn and Resume optimization built for ambitious finance
+          professionals targeting global roles.
         </p>
 
         {!isPaid ? (
@@ -243,7 +258,7 @@ export default function App() {
         )}
       </section>
 
-      {/* 5 STEPS */}
+      {/* FEATURES */}
       <section
         style={{
           maxWidth: "1200px",
@@ -276,25 +291,22 @@ export default function App() {
                 borderRadius: "24px",
                 background: "rgba(255,255,255,.04)",
                 border: "1px solid rgba(255,255,255,.08)",
-                backdropFilter: "blur(20px)",
-                boxShadow: "0 10px 40px rgba(0,0,0,.35)"
+                backdropFilter: "blur(20px)"
               }}
             >
               <div style={{ fontSize: "34px" }}>{card.icon}</div>
-
               <h3
                 style={{
                   marginTop: "18px",
-                  fontSize: "22px",
-                  color: "#D4AF37"
+                  color: "#D4AF37",
+                  fontSize: "22px"
                 }}
               >
                 {card.title}
               </h3>
-
               <p
                 style={{
-                  color: "#c3c3c3",
+                  color: "#c4c4c4",
                   lineHeight: 1.8
                 }}
               >
@@ -305,68 +317,12 @@ export default function App() {
         </div>
       </section>
 
-      {/* BEFORE AFTER */}
-      <section
-        style={{
-          maxWidth: "1100px",
-          margin: "80px auto",
-          padding: "20px"
-        }}
-      >
-        <h2
-          style={{
-            textAlign: "center",
-            fontSize: "42px",
-            marginBottom: "40px"
-          }}
-        >
-          Before vs After
-        </h2>
-
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "24px"
-          }}
-        >
-          <div
-            style={{
-              padding: "28px",
-              borderRadius: "24px",
-              background: "rgba(255,255,255,.03)",
-              border: "1px solid rgba(255,255,255,.08)"
-            }}
-          >
-            <h3 style={{ color: "#ff6f6f" }}>Before</h3>
-            <p style={{ color: "#aaa", lineHeight: 1.8 }}>
-              Generic profile. Weak positioning. No recruiter pull. Gets ignored.
-            </p>
-          </div>
-
-          <div
-            style={{
-              padding: "28px",
-              borderRadius: "24px",
-              background: "rgba(212,175,55,.08)",
-              border: "1px solid rgba(212,175,55,.2)"
-            }}
-          >
-            <h3 style={{ color: "#D4AF37" }}>After</h3>
-            <p style={{ lineHeight: 1.8 }}>
-              Sharp positioning. Premium profile. Recruiter-ready narrative.
-              Stronger interview conversion.
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* TOOL */}
       <section
         style={{
-          maxWidth: "900px",
-          margin: "auto",
-          padding: "40px 20px 120px"
+          maxWidth: "920px",
+          margin: "80px auto",
+          padding: "20px"
         }}
       >
         <div
@@ -384,18 +340,68 @@ export default function App() {
               marginTop: 0
             }}
           >
-            Try FinCareer Elite
+            Optimize Your Profile
           </h2>
 
+          {/* MODE SELECTOR */}
+          <div
+            style={{
+              display: "flex",
+              gap: "14px",
+              marginBottom: "20px"
+            }}
+          >
+            <button
+              onClick={() => setMode("linkedin")}
+              style={{
+                flex: 1,
+                padding: "14px",
+                borderRadius: "14px",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: 700,
+                background:
+                  mode === "linkedin"
+                    ? "linear-gradient(135deg,#B8860B 0%, #D4AF37 100%)"
+                    : "rgba(255,255,255,.05)",
+                color: mode === "linkedin" ? "#000" : "#fff"
+              }}
+            >
+              🔍 LinkedIn Mode
+            </button>
+
+            <button
+              onClick={() => setMode("resume")}
+              style={{
+                flex: 1,
+                padding: "14px",
+                borderRadius: "14px",
+                border: "none",
+                cursor: "pointer",
+                fontWeight: 700,
+                background:
+                  mode === "resume"
+                    ? "linear-gradient(135deg,#B8860B 0%, #D4AF37 100%)"
+                    : "rgba(255,255,255,.05)",
+                color: mode === "resume" ? "#000" : "#fff"
+              }}
+            >
+              📄 Resume Mode
+            </button>
+          </div>
+
           <textarea
-            placeholder="Paste your LinkedIn profile..."
+            placeholder={
+              mode === "linkedin"
+                ? "Paste your LinkedIn profile..."
+                : "Paste your resume summary..."
+            }
             value={input}
             onChange={(e) => setInput(e.target.value)}
             style={{
               width: "100%",
               height: "180px",
               padding: "18px",
-              marginTop: "10px",
               borderRadius: "18px",
               border: "1px solid rgba(255,255,255,.08)",
               background: "rgba(0,0,0,.25)",
@@ -410,7 +416,7 @@ export default function App() {
             onClick={runAI}
             style={{
               marginTop: "20px",
-              padding: "14px 26px",
+              padding: "14px 28px",
               borderRadius: "12px",
               border: "none",
               cursor: "pointer",
@@ -419,7 +425,7 @@ export default function App() {
                 "linear-gradient(135deg,#B8860B 0%, #D4AF37 40%, #F3D37A 100%)"
             }}
           >
-            {loading ? "Crafting..." : "Generate Elite Profile"}
+            {loading ? "Crafting..." : "Generate Elite Output"}
           </button>
 
           <div
